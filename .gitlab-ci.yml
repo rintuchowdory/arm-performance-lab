@@ -20,6 +20,12 @@ build_images:
     - docker build -t ubuntu-test -f docker/ubuntu-minimal.Dockerfile .
     - docker build -t debian-slim-test -f docker/debian-slim.Dockerfile .
     - docker build -t busybox-test -f docker/busybox.Dockerfile .
+
+    - echo "Saving images as tar files..."
+    - docker save alpine-test -o alpine-test.tar
+    - docker save ubuntu-test -o ubuntu-test.tar
+    - docker save debian-slim-test -o debian-slim-test.tar
+    - docker save busybox-test -o busybox-test.tar
   artifacts:
     paths:
       - alpine-test.tar
@@ -27,7 +33,7 @@ build_images:
       - debian-slim-test.tar
       - busybox-test.tar
   only:
-    - main
+    - master
 
 # ---------------------------------------------------------
 # BENCHMARK STAGE
@@ -53,7 +59,7 @@ benchmark:
       - io.txt
       - pkg.txt
   only:
-    - main
+    - master
 
 # ---------------------------------------------------------
 # SELECT FASTEST IMAGE
@@ -68,4 +74,4 @@ select_fastest:
       - fastest.txt
       - summary.md
   only:
-    - main
+    - master
