@@ -1,53 +1,3 @@
-stages:
-  - build
-  - benchmark
-  - select
-
-variables:
-  DOCKER_DRIVER: overlay2
-
-before_script:
-  - echo "Starting pipeline..."
-
-# Build all images
-build_images:
-  stage: build
-  script:
-    - docker build -t alpine-test -f docker/alpine.Dockerfile .
-    - docker build -t ubuntu-test -f docker/ubuntu-minimal.Dockerfile .
-    - docker build -t busybox-test -f docker/busybox.Dockerfile .
-  artifacts:
-    paths:
-      - alpine-test.tar
-      - ubuntu-test.tar
-      - busybox-test.tar
-  only:
-    - main
-
-# Run benchmarks
-benchmark:
-  stage: benchmark
-  script:
-    - echo "Running CPU benchmark..."
-    - bash benchmarks/cpu.sh > cpu.txt
-
-    - echo "Running memory benchmark..."
-    - bash benchmarks/memory.sh > memory.txt
-
-    - echo "Running I/O benchmark..."
-    - bash benchmarks/io.sh > io.txt
-
-    - echo "Running package install benchmark..."
-    - bash benchmarks/package-install.sh > pkg.txt
-  artifacts:
-    paths:
-      - cpu.txt
-      - memory.txt
-      - io.txt
-      - pkg.txt
-  only:
-    - main
-
 # Select fastest image
 select_fastest:
   stage: select
@@ -56,5 +6,6 @@ select_fastest:
   artifacts:
     paths:
       - fastest.txt
+      - summary.md
   only:
     - main
