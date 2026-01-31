@@ -1,7 +1,67 @@
-# Select fastest image
+stages:
+  - build
+  - benchmark
+  - select
+
+variables:
+  DOCKER_DRIVER: overlay2
+
+before_script:
+  - echo "Starting pipeline..."
+
+# ---------------------------------------------------------
+# BUILD STAGE
+# ---------------------------------------------------------
+build_images:
+  stage: build
+  script:
+    - echo "Building Docker images..."
+    - docker build -t alpine-test -f docker/alpine.Dockerfile .
+    - docker build -t ubuntu-test -f docker/ubuntu-minimal.Dockerfile .
+    - docker build -t debian-slim-test -f docker/debian-slim.Dockerfile .
+    - docker build -t busybox-test -f docker/busybox.Dockerfile .
+  artifacts:
+    paths:
+      - alpine-test.tar
+      - ubuntu-test.tar
+      - debian-slim-test.tar
+      - busybox-test.tar
+  only:
+    - main
+
+# ---------------------------------------------------------
+# BENCHMARK STAGE
+# ---------------------------------------------------------
+benchmark:
+  stage: benchmark
+  script:
+    - echo "Running CPU benchmark..."
+    - bash benchmarks/cpu.sh > cpu.txt
+
+    - echo "Running memory benchmark..."
+    - bash benchmarks/memory.sh > memory.txt
+
+    - echo "Running I/O benchmark..."
+    - bash benchmarks/io.sh > io.txt
+
+    - echo "Running package install benchmark..."
+    - bash benchmarks/package-install.sh > pkg.txt
+  artifacts:
+    paths:
+      - cpu.txt
+      - memory.txt
+      - io.txt
+      - pkg.txt
+  only:
+    - main
+
+# ---------------------------------------------------------
+# SELECT FASTEST IMAGE
+# ---------------------------------------------------------
 select_fastest:
   stage: select
   script:
+    - echo "Selecting fastest image..."
     - bash scripts/select_fastest.sh
   artifacts:
     paths:
