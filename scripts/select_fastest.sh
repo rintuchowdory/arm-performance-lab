@@ -2,27 +2,30 @@
 
 echo "=== Selecting Fastest Image ==="
 
-# Simple scoring system:
-# Lower time = better score
-# Each benchmark file contains lines like:
-# "Hashing time: 1.23 seconds"
+# Define images
+IMAGES=("alpine" "ubuntu" "debian-slim" "busybox")
 
-extract_time() {
-    grep "$1" "$2" | awk '{print $3}'
-}
+# Initialize score file
+echo "| Image | CPU | MEM | IO | PKG | Total |" > summary.md
+echo "|-------|-----|-----|----|-----|-------|" >> summary.md
 
-CPU_TIME=$(extract_time "Hashing time" cpu.txt)
-MEM_TIME=$(extract_time "Allocation time" memory.txt)
-IO_TIME=$(extract_time "Write time" io.txt)
-PKG_TIME=$(extract_time "update time" pkg.txt)
+BEST_IMAGE=""
+BEST_SCORE=9999
 
-echo "CPU: $CPU_TIME"
-echo "MEM: $MEM_TIME"
-echo "IO:  $IO_TIME"
-echo "PKG: $PKG_TIME"
+for IMG in "${IMAGES[@]}"; do
+  CPU=$(grep "$IMG" cpu.txt | awk '{print $3}')
+  MEM=$(grep "$IMG" memory.txt | awk '{print $3}')
+  IO=$(grep "$IMG" io.txt | awk '{print $3}')
+  PKG=$(grep "$IMG" pkg.txt | awk '{print $3}')
 
-# Calculate a simple total score
-TOTAL=$(echo "$CPU_TIME + $MEM_TIME + $IO_TIME + $PKG_TIME" | bc)
+  TOTAL=$(echo "$CPU + $MEM + $IO + $PKG" | bc)
+  echo "| $IMG | $CPU | $MEM | $IO | $PKG | $TOTAL |" >> summary.md
 
-echo "Total score: $TOTAL" > fastest.txt
-echo "=== Fastest image selected ==="
+  if (( $(echo "$TOTAL < $BEST_SCORE" | bc -l) )); then
+    BEST_SCORE=$TOTAL
+    BEST_IMAGE=$IMG
+  fi
+done
+
+echo "$BEST_IMAGE" > fastest.txt
+echo "Fastest image: $BEST_IMAGE with score $BEST_SCORE"
